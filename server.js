@@ -23,7 +23,7 @@ const app = express();
 // CORS configuration
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
-        ? process.env.CLIENT_URL 
+        ? [process.env.CLIENT_URL, 'https://*.netlify.app']
         : 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

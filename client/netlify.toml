@@ -5,4 +5,7 @@
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200 
+  status = 200
+
+[build.environment]
+  REACT_APP_API_URL = "https://qr-based-file-transfer.onrender.com" 
