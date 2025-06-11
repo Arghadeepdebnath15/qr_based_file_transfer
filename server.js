@@ -55,7 +55,17 @@ app.get('/api/test', (req, res) => {
 
 // Serve QR upload page
 app.get('/qr-upload/:token', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'qr-upload.html'));
+    const qrUploadPath = process.env.NODE_ENV === 'production'
+        ? path.join(__dirname, 'public', 'qr-upload.html')
+        : path.join(__dirname, 'public', 'qr-upload.html');
+    
+    console.log('Attempting to serve QR upload page from:', qrUploadPath);
+    res.sendFile(qrUploadPath, (err) => {
+        if (err) {
+            console.error('Error serving QR upload page:', err);
+            res.status(404).json({ message: 'QR upload page not found' });
+        }
+    });
 });
 
 // Serve static files from the React app in production
@@ -65,7 +75,14 @@ if (process.env.NODE_ENV === 'production') {
 
     // Handle React routing, return all requests to React app
     app.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+        const indexPath = path.join(__dirname, 'public', 'index.html');
+        console.log('Attempting to serve index.html from:', indexPath);
+        res.sendFile(indexPath, (err) => {
+            if (err) {
+                console.error('Error serving index.html:', err);
+                res.status(404).json({ message: 'Page not found' });
+            }
+        });
     });
 } else {
     // Serve static files from public directory in development
