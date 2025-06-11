@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import fileRoutes from './routes/files.js';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 // Load environment variables based on NODE_ENV
 if (process.env.NODE_ENV === 'production') {
@@ -40,7 +41,7 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/files', fileRoutes);
 
@@ -55,38 +56,38 @@ app.get('/api/test', (req, res) => {
 
 // Serve QR upload page
 app.get('/qr-upload/:token', (req, res) => {
-    const qrUploadPath = process.env.NODE_ENV === 'production'
-        ? path.join(__dirname, 'public', 'qr-upload.html')
-        : path.join(__dirname, 'public', 'qr-upload.html');
-    
+    const qrUploadPath = path.join(__dirname, 'public', 'qr-upload.html');
     console.log('Attempting to serve QR upload page from:', qrUploadPath);
-    res.sendFile(qrUploadPath, (err) => {
-        if (err) {
-            console.error('Error serving QR upload page:', err);
-            res.status(404).json({ message: 'QR upload page not found' });
-        }
-    });
+    
+    if (fs.existsSync(qrUploadPath)) {
+        res.sendFile(qrUploadPath);
+    } else {
+        console.error('QR upload page not found at:', qrUploadPath);
+        res.status(404).json({ message: 'QR upload page not found' });
+    }
 });
 
-// Serve static files from the React app in production
-if (process.env.NODE_ENV === 'production') {
-    // Serve static files from the React build directory
-    app.use(express.static(path.join(__dirname, 'client/build')));
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 
-    // Handle React routing, return all requests to React app
+// Handle React routing in production
+if (process.env.NODE_ENV === 'production') {
     app.get('*', (req, res) => {
         const indexPath = path.join(__dirname, 'public', 'index.html');
         console.log('Attempting to serve index.html from:', indexPath);
-        res.sendFile(indexPath, (err) => {
-            if (err) {
-                console.error('Error serving index.html:', err);
-                res.status(404).json({ message: 'Page not found' });
-            }
-        });
+        
+        if (fs.existsSync(indexPath)) {
+            res.sendFile(indexPath);
+        } else {
+            console.error('index.html not found at:', indexPath);
+            console.log('Current directory contents:', fs.readdirSync(path.join(__dirname, 'public')));
+            res.status(404).json({ 
+                message: 'Page not found',
+                path: indexPath,
+                exists: fs.existsSync(indexPath)
+            });
+        }
     });
-} else {
-    // Serve static files from public directory in development
-    app.use(express.static(path.join(__dirname, 'public')));
 }
 
 // Error handling middleware
@@ -98,11 +99,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({ message: 'Not Found' });
-});
-
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -112,6 +108,8 @@ mongoose.connect(MONGODB_URI)
         const PORT = process.env.PORT || 5000;
         app.listen(PORT, () => {
             console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+            console.log('Current directory:', __dirname);
+            console.log('Public directory contents:', fs.readdirSync(path.join(__dirname, 'public')));
             console.log('Available routes:');
             console.log('- GET  /api/test');
             console.log('- POST /api/auth/register');

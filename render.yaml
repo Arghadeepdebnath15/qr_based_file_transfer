@@ -10,6 +10,7 @@ services:
       cd ..
       mkdir -p public
       cp -r client/build/* public/
+      cp public/qr-upload.html public/
     startCommand: npm start
     envVars:
       - key: NODE_ENV
