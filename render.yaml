@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: qr-file-transfer-backend
+    name: qr-based-file-transfer
     env: node
     buildCommand: |
       # Install backend dependencies
@@ -22,19 +22,19 @@ services:
       # Ensure qr-upload.html exists
       if [ ! -f "public/qr-upload.html" ]; then
         echo "Creating qr-upload.html..."
-        echo "<!DOCTYPE html><html><head><title>QR Upload</title></head><body><h1>QR Upload Page</h1></body></html>" > public/qr-upload.html
+        cp public/index.html public/qr-upload.html
       fi
       
       # Verify critical files
       echo "Verifying build output..."
       ls -la public/
-    startCommand: npm start
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
+      - key: CLIENT_URL
+        value: https://qr-based-file-transfer.onrender.com
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
-        sync: false
-      - key: CLIENT_URL
         sync: false 
