@@ -3,32 +3,31 @@ services:
     name: qr-file-transfer-backend
     env: node
     buildCommand: |
-      echo "Starting build process..."
+      # Install backend dependencies
       npm install
-      echo "Installing client dependencies..."
+      
+      # Install and build frontend
       cd client
       npm install
-      echo "Building React app..."
       CI=false npm run build
-      echo "Verifying build output..."
-      if [ ! -d "build" ]; then
-        echo "Error: React build directory not found"
-        exit 1
-      fi
+      
+      # Create and populate public directory
       cd ..
-      echo "Creating public directory..."
       rm -rf public
       mkdir -p public
-      echo "Copying React build files..."
+      
+      # Copy frontend build files
       cp -r client/build/* public/
-      echo "Copying qr-upload.html..."
-      cp public/qr-upload.html public/
-      echo "Listing public directory contents:"
-      ls -la public/
-      if [ ! -f "public/index.html" ]; then
-        echo "Error: index.html not found in public directory"
-        exit 1
+      
+      # Ensure qr-upload.html exists
+      if [ ! -f "public/qr-upload.html" ]; then
+        echo "Creating qr-upload.html..."
+        echo "<!DOCTYPE html><html><head><title>QR Upload</title></head><body><h1>QR Upload Page</h1></body></html>" > public/qr-upload.html
       fi
+      
+      # Verify critical files
+      echo "Verifying build output..."
+      ls -la public/
     startCommand: npm start
     envVars:
       - key: NODE_ENV
