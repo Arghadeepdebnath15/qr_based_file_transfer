@@ -5,21 +5,40 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import fileRoutes from './routes/files.js';
+import dotenv from 'dotenv';
+
+// Load environment variables based on NODE_ENV
+if (process.env.NODE_ENV === 'production') {
+    dotenv.config();
+} else {
+    dotenv.config({ path: '.env.development' });
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? process.env.CLIENT_URL 
+        : 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Debug middleware to log all requests
-app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    next();
-});
+// Debug middleware - only in development
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, res, next) => {
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+        next();
+    });
+}
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -27,18 +46,31 @@ app.use('/api/files', fileRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {
-    console.log('Test route hit');
-    res.json({ message: 'Server is working' });
+    res.json({ 
+        message: 'Server is working',
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Serve QR upload page
 app.get('/qr-upload/:token', (req, res) => {
-    console.log('QR upload page requested for token:', req.params.token);
     res.sendFile(path.join(__dirname, 'public', 'qr-upload.html'));
 });
 
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === 'production') {
+    // Serve static files from the React build directory
+    app.use(express.static(path.join(__dirname, 'client/build')));
+
+    // Handle React routing, return all requests to React app
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+    });
+} else {
+    // Serve static files from public directory in development
+    app.use(express.static(path.join(__dirname, 'public')));
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -51,19 +83,18 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
-    console.log('404 Not Found:', req.method, req.url);
     res.status(404).json({ message: 'Not Found' });
 });
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/file-storage';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 mongoose.connect(MONGODB_URI)
     .then(() => {
         console.log('Connected to MongoDB');
         const PORT = process.env.PORT || 5000;
         app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
+            console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
             console.log('Available routes:');
             console.log('- GET  /api/test');
             console.log('- POST /api/auth/register');
