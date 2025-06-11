@@ -1,21 +1,32 @@
-const File = require('../models/File');
-const fs = require('fs');
-const path = require('path');
-const QRCode = require('qrcode');
-const { v4: uuidv4 } = require('uuid');
+import File from '../models/File.js';
+import fs from 'fs';
+import path from 'path';
+import QRCode from 'qrcode';
+import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Get base URL based on environment
 const getBaseUrl = () => {
-    return process.env.NODE_ENV === 'production' 
-        ? process.env.CLIENT_URL || 'https://qr-based-file-transfer.onrender.com'
-        : 'http://localhost:5000';
+    console.log('Current NODE_ENV:', process.env.NODE_ENV);
+    console.log('Current CLIENT_URL:', process.env.CLIENT_URL);
+    
+    if (process.env.NODE_ENV === 'production') {
+        return process.env.CLIENT_URL || 'https://qr-based-file-transfer.onrender.com';
+    }
+    return 'http://localhost:5000';
 };
 
 // Generate QR code for file upload
-exports.generateQR = async (req, res) => {
+export const generateQR = async (req, res) => {
     try {
         const receiveToken = uuidv4();
-        const qrData = `${getBaseUrl()}/qr-upload/${receiveToken}`;
+        const baseUrl = getBaseUrl();
+        const qrData = `${baseUrl}/qr-upload/${receiveToken}`;
+        
+        console.log('Generating QR code with URL:', qrData);
         
         // Generate QR code
         const qrCode = await QRCode.toDataURL(qrData);
@@ -32,7 +43,7 @@ exports.generateQR = async (req, res) => {
 };
 
 // Upload files via QR
-exports.uploadViaQR = async (req, res) => {
+export const uploadViaQR = async (req, res) => {
     try {
         if (!req.files || Object.keys(req.files).length === 0) {
             return res.status(400).json({ message: 'No files were uploaded' });
@@ -66,7 +77,7 @@ exports.uploadViaQR = async (req, res) => {
 };
 
 // Get files by receive token
-exports.getFilesByToken = async (req, res) => {
+export const getFilesByToken = async (req, res) => {
     try {
         const files = await File.find({ receiveToken: req.params.token });
         res.json(files);
@@ -77,7 +88,7 @@ exports.getFilesByToken = async (req, res) => {
 };
 
 // Delete file
-exports.deleteFile = async (req, res) => {
+export const deleteFile = async (req, res) => {
     try {
         const file = await File.findById(req.params.id);
         if (!file) {

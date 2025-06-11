@@ -1,31 +1,21 @@
 import mongoose from 'mongoose';
 
 const fileSchema = new mongoose.Schema({
-    originalName: {
+    fileName: {
         type: String,
         required: true
     },
-    mimeType: {
+    filePath: {
         type: String,
         required: true
     },
-    size: {
-        type: Number,
-        required: true
-    },
-    data: {
-        type: Buffer,
-        required: true
-    },
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    accessToken: {
+    receiveToken: {
         type: String,
-        required: true,
-        unique: true
+        required: true
+    },
+    uploadDate: {
+        type: Date,
+        default: Date.now
     }
 }, {
     timestamps: true
