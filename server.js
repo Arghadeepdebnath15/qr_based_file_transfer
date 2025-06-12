@@ -126,9 +126,12 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Hardcoded MongoDB URI and JWT secret
-const MONGODB_URI = 'mongodb://localhost:27017/qrfiledb';
+// Hardcoded MongoDB URIs
+const LOCAL_MONGODB_URI = 'mongodb://localhost:27017/qrfiledb';
+const PROD_MONGODB_URI = 'mongodb+srv://2023422375arghadeep:SjEckjBfyu8ECtBD@cluster0.y1rybwu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 const JWT_SECRET = 'your_jwt_secret';
+
+const MONGODB_URI = process.env.NODE_ENV === 'production' ? PROD_MONGODB_URI : LOCAL_MONGODB_URI;
 
 mongoose.connect(MONGODB_URI)
     .then(() => {
