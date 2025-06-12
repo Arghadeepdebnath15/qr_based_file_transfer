@@ -126,8 +126,9 @@ app.use((err, req, res, next) => {
     });
 });
 
-// MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI;
+// Hardcoded MongoDB URI and JWT secret
+const MONGODB_URI = 'mongodb://localhost:27017/qrfiledb';
+const JWT_SECRET = 'your_jwt_secret';
 
 mongoose.connect(MONGODB_URI)
     .then(() => {

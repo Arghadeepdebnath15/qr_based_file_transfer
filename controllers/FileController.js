@@ -8,15 +8,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Get base URL based on environment
+// Hardcode the production URL for now
 const getBaseUrl = () => {
-    console.log('Current NODE_ENV:', process.env.NODE_ENV);
-    console.log('Current CLIENT_URL:', process.env.CLIENT_URL);
-    
-    if (process.env.NODE_ENV === 'production') {
-        return process.env.CLIENT_URL || 'https://qr-based-file-transfer.onrender.com';
-    }
-    return 'http://localhost:5000';
+    return 'https://qr-based-file-transfer.onrender.com';
 };
 
 // Generate QR code for file upload
